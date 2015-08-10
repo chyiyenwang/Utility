@@ -1,0 +1,290 @@
+<html>
+
+<head>
+	<title>Utility</title>
+		<HTA:APPLICATION 
+			APPLICATIONNAME="Utility"
+			SCROLL="no"
+			SINGLEINSTANCE="yes"
+			BORDER="thin"
+		>
+		
+<script type="text/javascript">
+	var panels = new Array("","panel1","panel2","panel3","panel4");
+	function panel(tab) {
+		for (i=1; i<panels.length; i++) {
+			if (i == tab) {
+				document.getElementById("tab"+i).className = "tabs tabs1";
+				document.getElementById("panel"+i).style.display = "block";
+			} 
+			else {
+				document.getElementById("tab"+i).className = "tabs tabs0";
+				document.getElementById("panel"+i).style.display = "none";
+			}
+		}
+	}
+</script>
+
+<style type="text/css">
+ body, td, tr {font-family:arial;
+	   font-size:14;
+	   font-weight:bold;
+}
+.tabs {
+  border-collapse: collapse;
+  color: black;
+  cursor: pointer;
+  cursor: hand;
+  font-family: arial;
+  font-size: 9pt;
+  font-weight: bold;
+  margin-top: 4px;
+  padding: 2px 4px 0px 4px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  z-index: 1;
+}
+.tabs0 {
+  background-color: white;
+  border: solid 1px black;
+}
+.tabs1 {
+  background-color: E1E1E1;
+  border-color: black black black black;
+  border-style: solid solid solid solid;
+  border-width: 1px 1px 1px 1px;
+}
+</style>
+</head>
+
+<script type="text/vbscript">
+	Sub Window_onLoad
+		window.resizeTo 310, 800
+		submitComment_onClick
+	End Sub
+	
+	Const ForReading = 1
+	Dim dirTxtFile, dirTempFile, createDirList, readTempFile, delayTimer, saveTempFilePath
+	
+
+	Set fso = CreateObject("Scripting.FileSystemObject")
+	Set objRegEx = CreateObject("VBScript.RegExp")
+	Set Wshell = CreateObject("WScript.Shell")
+
+	
+	objRegEx.Global = True
+	objRegEx.Pattern = "[,;]|(\^\|\^)|(\|\^\|)|[\^\|]"
+	
+
+	Sub tab1_onClick
+		window.resizeTo 310, 800
+	End Sub
+	
+	Sub tab2_onClick
+		window.resizeTo 475, 400
+	End Sub
+	
+	Sub tab3_onClick
+		window.resizeTo 400, 275
+	End Sub
+	
+	Sub tab4_onClick
+		window.resizeTo 400, 275
+	End Sub
+
+	Sub submitConvert_onClick
+		Dim gb, strValue
+		
+		if isNumeric(textbox.value) Then
+			gb = convertToGB(textBox.value)
+			DataArea.innerHTML = gb + " GB"	
+		Else
+			strValue = convertText(textBox.value)
+			DataArea.innerHTML = strValue
+		End if
+	End Sub
+
+	Function convertToGB(bytes)
+		if radioButton(0).checked Then
+			convertToGB = formatNumber((bytes / 2^10), 7)
+		elseif radioButton(1).checked Then
+			convertToGB = formatNumber((bytes / 2^20), 7)
+		elseif radioButton(2).checked Then
+			convertToGB = formatNumber((bytes / 2^30), 7)	
+		End if
+	End Function 
+	
+	Function convertText(text)
+		convertText = objRegEx.Replace(text, "<br>")
+	End Function
+	
+	Sub submitComment_onClick
+		Dim x
+	
+		x = document.getElementById("optionChooser").value
+		
+		if x = "Import" Then
+			CommentArea.innerHTML = "*IMPORT JOB*<br><br>" & _
+									"Client/project/custodian> <br>" & _
+									"Job ID/name> <br>" & _
+									"Record Count> <br>" & _
+									"NAT> <br>" & _
+									"WKP> <br><br>" & _
+									"DBQT Normalization Query Executed<br>" & _
+									"Due to incomplete families unable to import using attachment field"
+		elseif x = "Process" Then
+			CommentArea.innerHTML = "*Ready for IQC*<br><br>" & _
+									"In-person By: <br>" & _
+									"Client/Custodian: <br>" & _
+									"Job ID/Name: <br>" & _
+									"WKP: "
+		elseif x = "IQC" Then
+			CommentArea.innerHTML = "*Ready for Export*<br><br>" & _
+									"Exception Count: <br>" & _
+									"Placeholder Fix Needed: <br>" & _
+									"Processing Job Validation complete"
+		elseif x = "Export" Then
+			CommentArea.innerHTML = "*EXPORT JOB*<br><br>" & _
+									"Client> <br>" & _
+									"Job ID/name> <br>" & _
+									"Record Count> <br>" & _
+									"EXP> <br>" & _
+									"WKP> "
+		elseif x = "Post-Export" Then
+			CommentArea.innerHTML = "*Ready for Deliverable QA*<br><br>" & _
+									"EXP: <br>" & _
+									"WKP: "
+		elseif x = "QA" Then
+			CommentArea.innerHTML = "Build passes QA<br>" & _
+									"Ready for upload to Relativity <br>" & _
+									"Location: "
+		End if
+	End Sub
+	
+	Sub submitRename_onClick
+		Dim answer
+	
+		If (fso.FolderExists(textRename.value)) Then
+			answer = msgBox("Are you sure?", vbYesNo)
+			
+			if answer = vbYes Then
+				renameExt(textRename.value)
+				msgBox(oldExtension.value & "'s have been renamed to " & newExtension.value)
+			End If
+		Else
+			msgBox("Invalid Path")
+		End If
+	End Sub
+	
+	Sub renameExt(objFolders)
+		Dim oldExt, newExt
+		
+		oldExt = "(*." & document.GetElementByID("oldExtension").value & ")"
+		newExt = " *." & document.GetElementByID("newExtension").value
+		
+		Wshell.run "cmd.exe /c pushd " & objFolders & _
+				   " && for /r %x in " & oldExt & " do ren " & chr(34) & "%x" & chr(34) & newExt,0,True
+	End Sub
+	
+	Sub submitDir_onClick
+		if fso.FolderExists(dirListPath.value) Then
+			savePath = inputBox("Enter Save Path")
+		
+			if fso.FolderExists(savePath) Then
+				saveTempFilePath = savePath & "\temp.txt"
+								
+				Wshell.run "cmd.exe /u /c pushd " & dirListPath.value & _
+						   " && dir /b/s/a:-d > " & chr(34) & saveTempFilePath & chr(34),0,True
+
+				Set dirTxtFile = fso.CreateTextFile(savePath & "\dirList.txt", True)
+				delayTimer = window.setTimeout("getDirList", 2000, "VBScript")
+			else
+				msgBox("Invalid Path")
+			end if
+		else
+			msgBox("Invalid Path")
+		end if
+	End Sub
+	
+	Function getDirList
+		window.clearTimeout(delayTimer)
+
+		Set readTempFile = fso.OpenTextFile(saveTempFilePath, 1)
+		dirTxtFile.WriteLine("REVIEWID," & "FILE_PATH")
+
+		Do Until readTempFile.AtEndOfStream
+			storeTempFileContents = readTempFile.ReadLine
+			createDirList = (fso.GetBaseName(storeTempFileContents) & "," & Replace(storeTempFileContents,removePath.value,""))
+			dirTxtFile.WriteLine(createDirList)
+		Loop
+		dirTxtFile.Close
+		readTempFile.Close
+		fso.DeleteFile(saveTempFilePath)
+		msgBox("Complete")
+	End Function
+</script>
+
+<body bgcolor="#DCF3FF">
+    <span class="tabs tabs1" id="tab1" onclick="panel(1)">Convert</span>
+    &nbsp; <span class="tabs tabs0" id="tab2" onclick="panel(2)">Comments</span>
+	&nbsp; <span class="tabs tabs0" id="tab3" onclick="panel(3)">Rename</span>
+	&nbsp; <span class="tabs tabs0" id="tab4" onclick="panel(4)">DirList</span>
+	<div class="panel" id="panel1">
+		<br>
+		<td><input type="button" value="Convert" name="run_button" id="submitConvert" highlight="highlight"></td><p>
+		<td><input type="radio" name="radioButton">MB</td>
+		<td><input type="radio" name="radioButton">KB</td>
+		<td><input type="radio" name="radioButton" checked="checked">Bytes</td><br>
+		<td><input style="width:200" type="text" name="textBox"><br>Please enter bytes/text</td>
+		<p>
+		<span id="DataArea"></span>
+	</div>
+	
+	<div class="panel" id="panel2" style="display:none">
+		<br>
+		<input style="width:50" type="button" value="Go" name="select_comment" id="submitComment"><p>
+		<select style="width:113" id="optionChooser">
+			<option value="Import">Import</option>
+			<option value="Process">Process</option>
+			<option value="IQC">IQC</option>
+			<option value="Export">Export</option>
+			<option value="Post-Export">Post-Export</option>
+			<option value="QA">QA</option>	
+		</select>
+		<br><br>
+		<span id="CommentArea"></span>
+	</div>
+	
+	<div class="panel" id="panel3" style="display:none">
+		<br>
+		<td><input type="button" value="Rename" id="submitRename"></td>
+		<table style="width:1%">
+			<tr>
+				<br><input style="width:300; margin-left:3px" type="text" name="textRename" value="" id="renameExtension"><br>&nbsp;Enter Top Level Path
+			</tr>
+			<tr>
+				<br>
+				<td><input style="width:75" type="text" value="MHTML" name="oldExtension" id="oldExtension"></td>
+				<td><input style="width:75" type="text" value="MHT" name="newExtension" id="newExtension"></td>
+			</tr>
+			<tr>
+				<td>Old Ext</td>
+				<td>New Ext</td>
+			</tr>
+		</table>
+	</div>
+	
+	<div class="panel" id="panel4" style="display:none">
+		<br>
+		<td><input type="button" value="Create" id="submitDir"></td>
+		<br><br>
+		<td>&nbsp;<input style="width:300" type="text" id="dirListPath"></td>
+		<br>&nbsp;Enter Top Level Path
+		<br><br>
+		<td>&nbsp;<input style="width:300" type="text" id="removePath"></td>
+		<br>&nbsp;Path to Remove
+	</div>
+</body>
+
+</html>
